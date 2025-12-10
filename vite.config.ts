@@ -17,10 +17,5 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false,
     minify: "esbuild",
-    terserOptions: {
-      compress: {
-        drop_console: true,
-      },
-    },
   },
 });
