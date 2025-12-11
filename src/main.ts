@@ -1,6 +1,3 @@
-// import fetchTour from "./api/fetchTour";
-// import TourRenderer from "./renderTour";
-
 const baseUrl = "";
 
 interface TourStep {
@@ -60,73 +57,6 @@ const mockTour: Tour = {
       content: "What do i say?",
     },
   ],
-};
-
-const initialize = async (options: { id: string }) => {
-  try {
-    console.log("i ran to initialie tour script.");
-    const tours = await fetchTour(options.id, true);
-
-    const container = document.createElement("div");
-    container.id = "widget-container";
-    document.body.appendChild(container);
-
-    const shadow = container.attachShadow({ mode: "open" });
-
-    const renderer = new TourRenderer(shadow, tours, container);
-    renderer.render();
-    console.log("tour script ran successfully");
-  } catch (err) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : "Failed to initialize tour, reload the page and try again.";
-    console.error("failed to initialie tour script", message);
-    showErrorMessage(message);
-  }
-};
-
-declare global {
-  interface Window {
-    TourWidget: any;
-  }
-}
-
-window.TourWidget = { initialize };
-
-const scriptTag = document.currentScript as HTMLScriptElement;
-const tourId = scriptTag.dataset?.id;
-if (tourId) {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      initialize({ id: tourId });
-    });
-  } else {
-    initialize({ id: tourId });
-  }
-}
-
-const showErrorMessage = (message: string) => {
-  const errorDiv = document.createElement("div");
-  errorDiv.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #ff4444;
-    color: white;
-    padding: 16px 20px;
-    border-radius: 8px;
-    font-family: sans-serif;
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000000;
-  `;
-  errorDiv.textContent = `Tour Error: ${message}`;
-  document.body.appendChild(errorDiv);
-
-  setTimeout(() => {
-    errorDiv.remove();
-  }, 5000);
 };
 
 const fetchTour = async (tourId: string, useMock: boolean = false) => {
@@ -642,5 +572,72 @@ class TourRenderer {
     setTimeout(() => {
       this.container.remove();
     }, 200);
+  }
+}
+
+const showErrorMessage = (message: string) => {
+  const errorDiv = document.createElement("div");
+  errorDiv.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #ff4444;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000000;
+  `;
+  errorDiv.textContent = `Tour Error: ${message}`;
+  document.body.appendChild(errorDiv);
+
+  setTimeout(() => {
+    errorDiv.remove();
+  }, 5000);
+};
+
+const initialize = async (options: { id: string }) => {
+  try {
+    console.log("i ran to initialie tour script.");
+    const tours = await fetchTour(options.id, true);
+
+    const container = document.createElement("div");
+    container.id = "widget-container";
+    document.body.appendChild(container);
+
+    const shadow = container.attachShadow({ mode: "open" });
+
+    const renderer = new TourRenderer(shadow, tours, container);
+    renderer.render();
+    console.log("tour script ran successfully");
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : "Failed to initialize tour, reload the page and try again.";
+    console.error("failed to initialie tour script", message);
+    showErrorMessage(message);
+  }
+};
+
+declare global {
+  interface Window {
+    TourWidget: any;
+  }
+}
+
+window.TourWidget = { initialize };
+
+const scriptTag = document.currentScript as HTMLScriptElement;
+const tourId = scriptTag.dataset?.id;
+if (tourId) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      initialize({ id: tourId });
+    });
+  } else {
+    initialize({ id: tourId });
   }
 }
