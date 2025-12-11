@@ -1,82 +1,125 @@
-const baseUrl = "";
+const baseUrl = "https://onboarding-app-ts.vercel.app";
+// const baseUrl = "http://localhost:3000";
 
-interface TourStep {
-  id: string;
-  order: number;
-  title: string;
-  content: string;
-  targetSelector?: string;
+interface ApiResponse {
+  success: boolean;
+  param: string;
+  data: Tour;
 }
 
 interface Tour {
   id: string;
   title: string;
   description: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  step_id: string;
   steps: TourStep[];
+}
+
+interface TourStep {
+  id: string;
+  order: number;
+  title: string;
+  content: string | null;
+  tour_id: string;
+  created_at: string;
 }
 
 const mockTour: Tour = {
   id: "tour_test_123",
   title: "Welcome to Your Product Tour",
   description: "Learn how to use our amazing features in just 7 steps",
+  user_id: "mock_user",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  step_id: "mock_step",
   steps: [
     {
       id: "step_1",
       order: 1,
-      title: " Welcome!",
-      content: "Thanks for trying our product tour widget! ",
+      title: "👋 Welcome!",
+      content: "Thanks for trying our product tour widget!",
+      tour_id: "tour_test_123",
+      created_at: new Date().toISOString(),
     },
     {
       id: "step_2",
       order: 2,
-      title: "Beautiful Design",
+      title: "🎨 Beautiful Design",
       content: "Step 2 description",
+      tour_id: "tour_test_123",
+      created_at: new Date().toISOString(),
     },
     {
       id: "step_3",
       order: 3,
       title: "⚡ Lightning Fast",
       content: "It's very fast.",
+      tour_id: "tour_test_123",
+      created_at: new Date().toISOString(),
     },
     {
       id: "step_4",
       order: 4,
-      title: " Secure & Private",
+      title: "🔒 Secure & Private",
       content: "Something something something",
+      tour_id: "tour_test_123",
+      created_at: new Date().toISOString(),
     },
     {
       id: "step_5",
       order: 5,
-      title: " Fully Responsive",
+      title: "📱 Fully Responsive",
       content: "Yeah, it's fully responsive",
+      tour_id: "tour_test_123",
+      created_at: new Date().toISOString(),
     },
     {
       id: "step_6",
       order: 6,
       title: "I'm out of dummy content",
       content: "What do i say?",
+      tour_id: "tour_test_123",
+      created_at: new Date().toISOString(),
     },
   ],
 };
 
-const fetchTour = async (tourId: string, useMock: boolean = false) => {
-  const bacendUrl = `${baseUrl}/${tourId}`;
+const fetchTour = async (
+  tourId: string,
+  useMock: boolean = false
+): Promise<Tour> => {
+  const backendUrl = `${baseUrl}/api/tours/${tourId}`;
   try {
     if (useMock) {
       return mockTour;
     }
-    const response = await fetch(bacendUrl, {
+    const response = await fetch(backendUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "omit",
     });
+
     if (!response.ok) {
-      throw new Error("Failed to fetch tour or tour does not exist .");
+      throw new Error("Failed to fetch tour or tour does not exist.");
     }
-    const data: Tour = await response.json();
-    return data;
+
+    const apiResponse: ApiResponse = await response.json();
+    console.log("API response", apiResponse);
+
+    if (!apiResponse.success) {
+      throw new Error("Tour fetch was not successful");
+    }
+
+    if (apiResponse.data.steps && apiResponse.data.steps.length > 0) {
+      apiResponse.data.steps.sort((a, b) => a.order - b.order);
+    }
+
+    return apiResponse.data;
   } catch (error) {
     console.error("Tour fetch error", error);
     throw error;
@@ -496,7 +539,9 @@ class TourRenderer {
     `;
 
     this.elements.title.textContent = step.title;
-    this.elements.content.textContent = step.content;
+
+    this.elements.content.textContent =
+      step.content || "No description provided";
 
     this.elements.prevButton.disabled = this.currentStepIndex === 0;
 
@@ -600,8 +645,8 @@ const showErrorMessage = (message: string) => {
 
 const initialize = async (options: { id: string }) => {
   try {
-    console.log("i ran to initialie tour script.");
-    const tours = await fetchTour(options.id, true);
+    console.log("Initializing tour script...");
+    const tour = await fetchTour(options.id, false);
 
     const container = document.createElement("div");
     container.id = "widget-container";
@@ -609,15 +654,15 @@ const initialize = async (options: { id: string }) => {
 
     const shadow = container.attachShadow({ mode: "open" });
 
-    const renderer = new TourRenderer(shadow, tours, container);
+    const renderer = new TourRenderer(shadow, tour, container);
     renderer.render();
-    console.log("tour script ran successfully");
+    console.log("Tour script ran successfully");
   } catch (err) {
     const message =
       err instanceof Error
         ? err.message
         : "Failed to initialize tour, reload the page and try again.";
-    console.error("failed to initialie tour script", message);
+    console.error("Failed to initialize tour script", message);
     showErrorMessage(message);
   }
 };
